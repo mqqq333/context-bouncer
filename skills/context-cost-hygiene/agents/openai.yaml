@@ -1,0 +1,4 @@
+interface:
+  display_name: "Context Cost Hygiene"
+  short_description: "Reduce prompt-cache, context, and review token bloat."
+  default_prompt: "Use $context-cost-hygiene to start a clean, low-token Codex or Claude workflow from the current task."
