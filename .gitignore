@@ -6,3 +6,5 @@ __pycache__/
 .DS_Store
 .omx/
 benchmarks/runs/
+benchmarks/results/**/usage-imports/
+benchmarks/results/**/usage-imports*/

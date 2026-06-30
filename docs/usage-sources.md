@@ -57,6 +57,20 @@ python scripts\summarize_benchmark.py `
   --out benchmarks\results\daily-paper-v1\summary.md
 ```
 
+
+## Generate usage templates for existing records
+
+For a directory of benchmark records, create one manual usage JSON template per record:
+
+```powershell
+python scripts\prepare_usage_templates.py `
+  --results benchmarks\results\daily-paper-v1
+```
+
+This creates files under `benchmarks/results/daily-paper-v1/usage-imports/`. Fill the aggregate fields from your intermediary/provider dashboard, then import each file with `scripts/import_usage.py`.
+
+Generated templates are intended as local work-in-progress. Review them before committing; do not commit secrets or transcript excerpts.
+
 ## Privacy rules
 
 - Import aggregate usage fields only.
