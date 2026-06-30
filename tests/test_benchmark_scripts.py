@@ -100,6 +100,23 @@ class BenchmarkScriptTests(unittest.TestCase):
             self.assertTrue(out.exists())
             self.assertIn("summary.md", stdout.getvalue())
 
+    def test_prepare_rubric_path_is_repo_anchored_from_other_cwd(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fixture = self.make_fixture(tmp_path)
+            out = tmp_path / "run"
+            old_cwd = Path.cwd()
+            try:
+                import os
+                os.chdir(tmp_path)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    prepare_benchmark.prepare(fixture, out, ROOT)
+            finally:
+                os.chdir(old_cwd)
+            prompt = (out / "fresh_handoff.md").read_text(encoding="utf-8-sig")
+            self.assertIn("quality-rubric.md", prompt)
+            self.assertNotIn(str(tmp_path / "benchmarks"), prompt)
+
 
 if __name__ == "__main__":
     unittest.main()

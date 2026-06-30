@@ -75,8 +75,8 @@ def find_bloat(root: Path, limit: int) -> list[FileInfo]:
             continue
         name_hit = p.name in BLOAT_NAMES
         dir_hit = any(part in CONTEXT_DIRS for part in p.parts)
-        md_hit = p.suffix.lower() in {".md", ".txt"} and p.stat().st_size > 50_000
-        if name_hit or dir_hit or md_hit:
+        large_text_hit = p.suffix.lower() in {".md", ".txt", ".html", ".log", ".jsonl"} and p.stat().st_size > 20_000
+        if name_hit or dir_hit or large_text_hit:
             try:
                 size = p.stat().st_size
                 sample, _ = read_text(p, DEFAULT_SCAN_SAMPLE_CHARS)

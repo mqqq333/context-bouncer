@@ -13,6 +13,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+
 try:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -36,7 +38,6 @@ REQUIRED_EXPECTED = [
     "expected-review-judgment.md",
     "required-fixes.md",
 ]
-FIXED_TASK = "Finish the publishing readiness check for daily-paper-v1."
 
 
 def rel(path: Path, root: Path) -> str:
@@ -120,13 +121,15 @@ Record whether the review packet truncates any file.
 
 
 def build_prompt(fixture: Path, out_dir: Path, arm: str, commit: str) -> str:
+    fixture_name = fixture.name
+    fixed_task = f"Finish the publishing readiness check for {fixture_name}."
     input_files = "\n".join(f"- `{rel(fixture / 'input' / name, out_dir)}`" for name in REQUIRED_INPUTS)
-    rubric = rel(Path("benchmarks/templates/quality-rubric.md"), out_dir)
+    rubric = rel(ROOT / "benchmarks" / "templates" / "quality-rubric.md", out_dir)
     return f"""# Benchmark run prompt: {arm}
 
 Fixture: `{fixture}`
 Context Bouncer commit: `{commit}`
-Task: {FIXED_TASK}
+Task: {fixed_task}
 
 ## Fixed requirements
 
@@ -155,7 +158,7 @@ Task: {FIXED_TASK}
 
 ## Result record
 
-After the run, copy the matching object from `result-record-template.json` into `benchmarks/results/daily-paper-v1/` and fill actual values.
+After the run, copy the matching object from `result-record-template.json` into `benchmarks/results/{fixture_name}/` and fill actual values.
 """
 
 
@@ -230,8 +233,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    repo = Path(__file__).resolve().parents[1]
-    prepare(args.fixture, args.out, repo)
+    prepare(args.fixture, args.out, ROOT)
     return 0
 
 

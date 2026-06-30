@@ -29,9 +29,9 @@ Use provider-reported usage logs as primary evidence:
 
 `context_bouncer.py scan` rough token estimates are triage hints only; do not use them as benchmark billing data.
 
-## Initial fixture
+## Fixtures
 
-Use `benchmarks/fixtures/daily-paper-v1` as the first synthetic fixture. It models a daily-paper package workflow:
+Use `benchmarks/fixtures/daily-paper-v1` as the first small synthetic fixture. It models a daily-paper package workflow:
 
 - A paper package with Markdown, HTML, checklist, figure index, review notes, and image-generation logs.
 - A Claude review step where Codex should judge whether issues are reasonable before fixing.
@@ -78,3 +78,8 @@ Follow the benchmark honesty style of Ponytail:
 - do not claim universal savings from one cherry-picked run;
 - include quality gates, not only token savings;
 - report net cost, not only raw input-token deltas.
+
+
+### Bloat fixture
+
+`benchmarks/fixtures/daily-paper-bloat-v1` is a larger synthetic fixture with long old review notes, large HTML, and noisy logs. Use it when testing whether fresh handoffs and scoped review packets reduce avoidable context carryover. It is still synthetic; import provider-reported usage before making any cost/token claim.

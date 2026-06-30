@@ -104,6 +104,15 @@ class ContextBouncerTests(unittest.TestCase):
             self.assertNotIn(".git/README.md", output)
             self.assertNotIn("node_modules/README.md", output)
 
+    def test_scan_flags_large_html_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            large_html = tmp_path / "article.html"
+            large_html.write_text("<p>synthetic bloat</p>\n" * 1200, encoding="utf-8")
+            code, output = self.run_cli(["scan", "--repo", str(tmp_path), "--limit", "10"])
+            self.assertEqual(code, 0)
+            self.assertIn("article.html", output)
+
 
 if __name__ == "__main__":
     unittest.main()
