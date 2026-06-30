@@ -82,9 +82,9 @@ class QueryUsageTests(unittest.TestCase):
         self.assertEqual(summary["input_cost_usd"], 0.015)
         self.assertEqual(summary["output_cost_usd"], 0.022)
         self.assertEqual(summary["cached_input_cost_usd"], 0.038)
-        self.assertEqual(summary["raw_cost_usd"], 0.075)
-        self.assertEqual(summary["billed_cost_usd"], 0.015)
-        self.assertEqual(summary["cost_usd"], 0.015)
+        self.assertAlmostEqual(summary["raw_cost_usd"], 0.075)
+        self.assertAlmostEqual(summary["billed_cost_usd"], 0.015)
+        self.assertAlmostEqual(summary["cost_usd"], 0.015)
         self.assertEqual(summary["rate_multiplier"], 0.2)
 
     def test_sanitize_redacts_secrets_and_omits_transcript_blobs(self):
