@@ -55,10 +55,17 @@ TOKEN_FIELD_ALIASES = {
         "cache_write_input_tokens",
     ),
 }
-COST_ALIASES = ("cost_usd", "total_cost_usd", "cost", "amount", "total_amount", "price")
+BILLED_COST_ALIASES = ("cost_usd", "billed_cost_usd", "actual_cost", "charged_cost", "charged_amount")
+RAW_COST_ALIASES = ("raw_cost_usd", "total_cost", "total_cost_usd", "original_cost", "original_amount")
+INPUT_COST_ALIASES = ("input_cost", "input_cost_usd", "prompt_cost")
+CACHED_INPUT_COST_ALIASES = ("cache_read_cost", "cached_input_cost", "cached_input_cost_usd")
+OUTPUT_COST_ALIASES = ("output_cost", "output_cost_usd", "completion_cost")
+CACHE_WRITE_COST_ALIASES = ("cache_creation_cost", "cache_write_cost", "cache_write_cost_usd")
+RATE_MULTIPLIER_ALIASES = ("rate_multiplier", "multiplier", "billing_multiplier")
 CURRENCY_ALIASES = ("currency", "currency_code")
 
-SENSITIVE_KEY_PARTS = ("key", "token", "secret", "authorization", "cookie", "password")
+SENSITIVE_KEY_PARTS = ("key", "token", "secret", "authorization", "cookie", "password", "bearer")
+SAFE_TOKEN_COUNT_KEY_SUFFIXES = ("_tokens", "tokens")
 TEXTUAL_BLOB_KEY_PARTS = ("prompt", "message", "messages", "content", "transcript", "request", "response")
 
 
@@ -179,6 +186,41 @@ def find_records(payload: Any) -> list[dict[str, Any]]:
     return []
 
 
+
+
+def add_cost_breakdown(target: dict[str, Any], candidates: list[Mapping[str, Any]]) -> None:
+    fields = {
+        "input_cost_usd": INPUT_COST_ALIASES,
+        "cached_input_cost_usd": CACHED_INPUT_COST_ALIASES,
+        "output_cost_usd": OUTPUT_COST_ALIASES,
+        "cache_write_cost_usd": CACHE_WRITE_COST_ALIASES,
+        "raw_cost_usd": RAW_COST_ALIASES,
+        "billed_cost_usd": BILLED_COST_ALIASES,
+        "rate_multiplier": RATE_MULTIPLIER_ALIASES,
+    }
+    for output_key, aliases in fields.items():
+        value = None
+        for candidate in candidates:
+            value = first_number(candidate, aliases)
+            if value is not None:
+                break
+        target[output_key] = value
+
+    if target.get("raw_cost_usd") is None:
+        components = [
+            target.get("input_cost_usd"),
+            target.get("cached_input_cost_usd"),
+            target.get("output_cost_usd"),
+            target.get("cache_write_cost_usd"),
+        ]
+        if any(value is not None for value in components):
+            target["raw_cost_usd"] = sum(float(value or 0) for value in components)
+    if target.get("billed_cost_usd") is None and target.get("raw_cost_usd") is not None and target.get("rate_multiplier") is not None:
+        target["billed_cost_usd"] = float(target["raw_cost_usd"]) * float(target["rate_multiplier"])
+    # cost_usd is the benchmark-facing field and means actual billed cost when available.
+    target["cost_usd"] = target.get("billed_cost_usd")
+
+
 def normalize_from_stats(stats_payload: Any) -> dict[str, Any]:
     candidates: list[Mapping[str, Any]] = []
     if isinstance(stats_payload, dict):
@@ -197,12 +239,7 @@ def normalize_from_stats(stats_payload: Any) -> dict[str, Any]:
                 break
         normalized[canonical] = int(value) if value is not None else None
 
-    cost = None
-    for candidate in candidates:
-        cost = first_number(candidate, COST_ALIASES)
-        if cost is not None:
-            break
-    normalized["cost_usd"] = cost
+    add_cost_breakdown(normalized, candidates)
 
     for candidate in candidates:
         for key in CURRENCY_ALIASES:
@@ -217,24 +254,53 @@ def normalize_from_stats(stats_payload: Any) -> dict[str, Any]:
 
 def summarize_records(records: list[dict[str, Any]]) -> dict[str, Any]:
     summary: dict[str, Any] = {"record_count": len(records)}
+    normalized_records: list[dict[str, Any]] = []
+    for record in records:
+        normalized = dict(record)
+        add_cost_breakdown(normalized, [record])
+        normalized_records.append(normalized)
+
     for canonical, aliases in TOKEN_FIELD_ALIASES.items():
         total = 0.0
         found = False
-        for record in records:
+        for record in normalized_records:
             value = first_number(record, aliases)
             if value is not None:
                 total += value
                 found = True
         summary[canonical] = int(total) if found else None
-    cost_total = 0.0
-    cost_found = False
-    for record in records:
-        value = first_number(record, COST_ALIASES)
-        if value is not None:
-            cost_total += value
-            cost_found = True
-    summary["cost_usd"] = cost_total if cost_found else None
+    cost_fields = (
+        "input_cost_usd",
+        "cached_input_cost_usd",
+        "output_cost_usd",
+        "cache_write_cost_usd",
+        "raw_cost_usd",
+        "billed_cost_usd",
+    )
+    for output_key in cost_fields:
+        total = 0.0
+        found = False
+        for record in normalized_records:
+            value = as_number(record.get(output_key))
+            if value is not None:
+                total += value
+                found = True
+        summary[output_key] = total if found else None
+    summary["cost_usd"] = summary["billed_cost_usd"]
+
+    multipliers = sorted({value for record in records for value in [first_number(record, RATE_MULTIPLIER_ALIASES)] if value is not None})
+    if len(multipliers) == 1:
+        summary["rate_multiplier"] = multipliers[0]
+    elif len(multipliers) > 1:
+        summary["rate_multipliers"] = multipliers
     return summary
+
+
+def is_sensitive_key(key: str) -> bool:
+    lower = key.lower()
+    if lower.endswith(SAFE_TOKEN_COUNT_KEY_SUFFIXES):
+        return False
+    return any(part in lower for part in SENSITIVE_KEY_PARTS)
 
 
 def sanitize_for_file(data: Any, *, max_string_len: int = 240) -> Any:
@@ -249,7 +315,7 @@ def sanitize_for_file(data: Any, *, max_string_len: int = 240) -> Any:
         out: dict[str, Any] = {}
         for key, value in data.items():
             lower = str(key).lower()
-            if any(part in lower for part in SENSITIVE_KEY_PARTS):
+            if is_sensitive_key(str(key)):
                 out[key] = "<redacted>"
             elif any(part in lower for part in TEXTUAL_BLOB_KEY_PARTS):
                 if isinstance(value, (dict, list)):

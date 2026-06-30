@@ -25,7 +25,12 @@ class QueryUsageTests(unittest.TestCase):
                 "cached_prompt_tokens": 900,
                 "completion_tokens": 50,
                 "cache_creation_input_tokens": 20,
-                "total_amount": "0.123",
+                "input_cost": 0.029590,
+                "output_cost": 0.003360,
+                "cache_read_cost": 0.027072,
+                "total_cost": 0.060022,
+                "actual_cost": 0.012004,
+                "rate_multiplier": 0.2,
                 "currency": "USD",
             }
         }
@@ -35,30 +40,72 @@ class QueryUsageTests(unittest.TestCase):
         self.assertEqual(usage["cached_input_tokens"], 900)
         self.assertEqual(usage["output_tokens"], 50)
         self.assertEqual(usage["cache_write_tokens"], 20)
-        self.assertEqual(usage["cost_usd"], 0.123)
+        self.assertEqual(usage["input_cost_usd"], 0.029590)
+        self.assertEqual(usage["output_cost_usd"], 0.003360)
+        self.assertEqual(usage["cached_input_cost_usd"], 0.027072)
+        self.assertEqual(usage["raw_cost_usd"], 0.060022)
+        self.assertEqual(usage["billed_cost_usd"], 0.012004)
+        self.assertEqual(usage["cost_usd"], 0.012004)
+        self.assertEqual(usage["rate_multiplier"], 0.2)
         self.assertEqual(usage["currency"], "USD")
 
     def test_find_records_and_summarize(self):
-        payload = {"data": {"items": [{"input_tokens": 10, "output_tokens": 2, "cost": 0.1}, {"prompt_tokens": 5}]}}
+        payload = {
+            "data": {
+                "items": [
+                    {
+                        "input_tokens": 10,
+                        "output_tokens": 2,
+                        "input_cost": 0.01,
+                        "output_cost": 0.02,
+                        "cache_read_cost": 0.03,
+                        "total_cost": 0.06,
+                        "actual_cost": 0.012,
+                        "rate_multiplier": 0.2,
+                    },
+                    {
+                        "prompt_tokens": 5,
+                        "input_cost": 0.005,
+                        "output_cost": 0.002,
+                        "cache_read_cost": 0.008,
+                        "rate_multiplier": 0.2,
+                    },
+                ]
+            }
+        }
         records = query_usage.find_records(payload)
         self.assertEqual(len(records), 2)
         summary = query_usage.summarize_records(records)
         self.assertEqual(summary["record_count"], 2)
         self.assertEqual(summary["input_tokens"], 15)
         self.assertEqual(summary["output_tokens"], 2)
-        self.assertEqual(summary["cost_usd"], 0.1)
+        self.assertEqual(summary["input_cost_usd"], 0.015)
+        self.assertEqual(summary["output_cost_usd"], 0.022)
+        self.assertEqual(summary["cached_input_cost_usd"], 0.038)
+        self.assertEqual(summary["raw_cost_usd"], 0.075)
+        self.assertEqual(summary["billed_cost_usd"], 0.015)
+        self.assertEqual(summary["cost_usd"], 0.015)
+        self.assertEqual(summary["rate_multiplier"], 0.2)
 
     def test_sanitize_redacts_secrets_and_omits_transcript_blobs(self):
         data = {
             "api_key": "sk-test",
             "authorization": "Bearer x",
+            "access_token": "secret-token",
+            "private_key": "secret-key",
             "messages": [{"content": "hello"}],
+            "input_tokens": 123,
+            "cache_read_tokens": 456,
             "small": "ok",
         }
         safe = query_usage.sanitize_for_file(data)
         self.assertEqual(safe["api_key"], "<redacted>")
         self.assertEqual(safe["authorization"], "<redacted>")
+        self.assertEqual(safe["access_token"], "<redacted>")
+        self.assertEqual(safe["private_key"], "<redacted>")
         self.assertEqual(safe["messages"], "<omitted>")
+        self.assertEqual(safe["input_tokens"], 123)
+        self.assertEqual(safe["cache_read_tokens"], 456)
         self.assertEqual(safe["small"], "ok")
 
     def test_query_usage_builds_expected_urls_without_printing_base_url(self):
@@ -69,9 +116,9 @@ class QueryUsageTests(unittest.TestCase):
             if url.endswith("/api/v1/auth/me?timezone=Asia%2FShanghai"):
                 return {"email": "user@example.com", "token": "secret"}
             if "/api/v1/usage/stats?" in url:
-                return {"data": {"input_tokens": 100, "cached_input_tokens": 80, "output_tokens": 10, "cost_usd": 0.02}}
+                return {"data": {"input_tokens": 100, "cached_input_tokens": 80, "output_tokens": 10, "actual_cost": 0.02}}
             if "/api/v1/usage?" in url:
-                return {"data": {"items": [{"input_tokens": 100, "output_tokens": 10, "cost": 0.02}], "has_next": False}}
+                return {"data": {"items": [{"input_tokens": 100, "output_tokens": 10, "actual_cost": 0.02}], "has_next": False}}
             raise AssertionError(url)
 
         args = query_usage.build_parser().parse_args([

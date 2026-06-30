@@ -93,6 +93,16 @@ Default endpoint paths are:
 - `/api/v1/usage` for paginated record summaries.
 
 The script prints/writes normalized aggregate fields. Auth checks report only success/failure, not account details. Saved record previews redact obvious secret fields, but `.omx/private/` outputs should still not be committed.
+HappyCode-style cost fields are normalized as:
+
+```text
+raw_cost_usd = input_cost_usd + cached_input_cost_usd + output_cost_usd + cache_write_cost_usd
+billed_cost_usd = actual_cost = raw_cost_usd * rate_multiplier
+cost_usd = billed_cost_usd
+```
+
+For this provider, `input_tokens` and `cache_read_tokens` are separate buckets; do not subtract cache reads from input tokens again.
+
 
 ## Privacy rules
 
