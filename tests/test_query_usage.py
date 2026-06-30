@@ -86,7 +86,8 @@ class QueryUsageTests(unittest.TestCase):
         self.assertEqual(result["base_url"], "<configured>")
         self.assertEqual(result["usage"]["input_tokens"], 100)
         self.assertEqual(result["records_summary"]["record_count"], 1)
-        self.assertEqual(result["auth"]["sanitized"]["token"], "<redacted>")
+        self.assertEqual(result["auth"], {"ok": True})
+        self.assertNotIn("sanitized", result["auth"])
         self.assertTrue(any("start_date=2026-06-24" in call for call in calls))
 
     def test_cli_requires_base_url(self):

@@ -319,8 +319,8 @@ def query_usage(args: argparse.Namespace) -> dict[str, Any]:
 
     if args.check_auth:
         auth_url = join_url(base_url, args.auth_path) + "?" + urllib.parse.urlencode({"timezone": args.timezone})
-        auth_payload = request_json(auth_url, headers, args.timeout)
-        result["auth"] = {"ok": True, "sanitized": sanitize_for_file(auth_payload)}
+        request_json(auth_url, headers, args.timeout)
+        result["auth"] = {"ok": True}
 
     stats_url = join_url(base_url, args.stats_path) + "?" + build_query(args)
     stats_payload = request_json(stats_url, headers, args.timeout)

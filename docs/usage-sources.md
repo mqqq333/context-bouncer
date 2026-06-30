@@ -92,7 +92,7 @@ Default endpoint paths are:
 - `/api/v1/usage/stats` for aggregate usage;
 - `/api/v1/usage` for paginated record summaries.
 
-The script prints/writes normalized aggregate fields and redacts obvious secret fields when saving record previews. Do not commit `.omx/private/` outputs.
+The script prints/writes normalized aggregate fields. Auth checks report only success/failure, not account details. Saved record previews redact obvious secret fields, but `.omx/private/` outputs should still not be committed.
 
 ## Privacy rules
 
