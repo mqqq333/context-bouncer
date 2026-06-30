@@ -14,6 +14,10 @@ jobs:
           python-version: '3.11'
       - name: CLI help
         run: python scripts/context_bouncer.py --help
+      - name: Benchmark script help
+        run: |
+          python scripts/prepare_benchmark.py --help
+          python scripts/summarize_benchmark.py --help
       - name: Unit tests
         run: python -m unittest discover -s tests
       - name: Scan self

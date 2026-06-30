@@ -13,65 +13,183 @@
     "artifacts"
   ],
   "properties": {
-    "fixture": {"type": "string"},
+    "fixture": {
+      "type": "string"
+    },
     "arm": {
       "type": "string",
-      "enum": ["long_session_baseline", "fresh_handoff", "fresh_handoff_scoped_review"]
+      "enum": [
+        "long_session_baseline",
+        "fresh_handoff",
+        "fresh_handoff_scoped_review"
+      ]
     },
-    "context_bouncer_commit": {"type": "string"},
-    "started_at": {"type": "string", "format": "date-time"},
-    "ended_at": {"type": "string", "format": "date-time"},
+    "context_bouncer_commit": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "tool_versions": {
       "type": "object",
       "properties": {
-        "codex": {"type": "string"},
-        "claude_code": {"type": "string"},
-        "python": {"type": "string"},
-        "os": {"type": "string"}
+        "codex": {
+          "type": "string"
+        },
+        "claude_code": {
+          "type": "string"
+        },
+        "python": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        }
       },
       "additionalProperties": true
     },
     "models": {
       "type": "object",
       "properties": {
-        "codex": {"type": "string"},
-        "claude": {"type": "string"}
+        "codex": {
+          "type": "string"
+        },
+        "claude": {
+          "type": "string"
+        }
       },
       "additionalProperties": true
     },
     "usage": {
       "type": "object",
-      "required": ["source"],
+      "required": [
+        "source"
+      ],
       "properties": {
-        "source": {"type": "string"},
-        "input_tokens": {"type": ["integer", "null"], "minimum": 0},
-        "cached_input_tokens": {"type": ["integer", "null"], "minimum": 0},
-        "output_tokens": {"type": ["integer", "null"], "minimum": 0},
-        "cache_write_tokens": {"type": ["integer", "null"], "minimum": 0},
-        "cost_usd": {"type": ["number", "null"], "minimum": 0},
-        "turns": {"type": ["integer", "null"], "minimum": 0},
-        "wall_time_sec": {"type": ["number", "null"], "minimum": 0}
+        "source": {
+          "type": "string"
+        },
+        "input_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "cached_input_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "cache_write_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "cost_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "turns": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "wall_time_sec": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
       },
       "additionalProperties": true
     },
     "quality": {
       "type": "object",
-      "required": ["score", "quality_pass", "critical_failures"],
+      "required": [
+        "score",
+        "quality_pass",
+        "critical_failures"
+      ],
       "properties": {
-        "score": {"type": "integer", "minimum": 0, "maximum": 10},
-        "quality_pass": {"type": "boolean"},
-        "critical_failures": {"type": "array", "items": {"type": "string"}},
-        "grader": {"type": "string"},
-        "notes": {"type": "string"}
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "quality_pass": {
+          "type": "boolean"
+        },
+        "critical_failures": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "grader": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
       },
       "additionalProperties": true
     },
     "artifacts": {
       "type": "object",
-      "additionalProperties": {"type": "string"}
+      "additionalProperties": {
+        "type": "string"
+      }
     },
-    "limitations": {"type": "array", "items": {"type": "string"}},
-    "notes": {"type": "string"}
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "packet": {
+      "type": "object",
+      "properties": {
+        "truncated_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "approx_token_count_used_for_billing": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
   },
   "additionalProperties": false
 }

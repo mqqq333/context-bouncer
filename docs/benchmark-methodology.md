@@ -16,7 +16,7 @@ Only the context strategy should differ across arms. The task, fixture, model fa
 
 ## Required measurements
 
-Record provider-reported usage whenever available:
+Record provider-reported usage whenever available. Use `benchmarks/templates/run-log-template.md` during manual runs:
 
 - fresh input tokens;
 - cached input tokens;
@@ -27,7 +27,8 @@ Record provider-reported usage whenever available:
 - wall time;
 - quality score and pass/fail;
 - critical failures;
-- notes on reviewer issue judgment.
+- notes on reviewer issue judgment;
+- whether any handoff/review-packet file was truncated.
 
 Rough token estimates from `context_bouncer.py scan` are local triage hints only. They are not billing evidence and must not be used as the primary benchmark metric.
 
