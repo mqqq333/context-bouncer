@@ -122,6 +122,16 @@
             "null"
           ],
           "minimum": 0
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "additionalProperties": true

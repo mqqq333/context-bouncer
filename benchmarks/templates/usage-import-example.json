@@ -1,0 +1,14 @@
+{
+  "source": "manual:intermediary",
+  "provider": "replace with dashboard/provider name",
+  "model": "replace with model name",
+  "input_tokens": null,
+  "cached_input_tokens": null,
+  "output_tokens": null,
+  "cache_write_tokens": null,
+  "cost_usd": null,
+  "turns": null,
+  "wall_time_sec": null,
+  "notes": "Aggregate usage only. Do not paste transcript text or secrets.",
+  "currency": "USD"
+}

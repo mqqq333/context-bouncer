@@ -18,6 +18,7 @@ jobs:
         run: |
           python scripts/prepare_benchmark.py --help
           python scripts/summarize_benchmark.py --help
+          python scripts/import_usage.py --help
       - name: Unit tests
         run: python -m unittest discover -s tests
       - name: Scan self
