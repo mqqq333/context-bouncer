@@ -1,0 +1,51 @@
+{
+  "fixture": "benchmarks/fixtures/daily-paper-v1",
+  "arm": "fresh_handoff",
+  "context_bouncer_commit": "feeff3604889c1a5b3ee0c55fac4bc4d008dc240",
+  "started_at": "2026-06-30T13:44:00.635040+00:00",
+  "ended_at": "2026-06-30T13:44:00.635040+00:00",
+  "tool_versions": {
+    "codex": "current Codex session; exact provider usage unavailable",
+    "claude_code": null,
+    "python": "3.12",
+    "os": "Windows"
+  },
+  "models": {
+    "codex": "current Codex session",
+    "claude": null
+  },
+  "usage": {
+    "source": "operator-smoke run; provider-reported token/cost values unavailable, so numeric usage fields are intentionally null",
+    "input_tokens": null,
+    "cached_input_tokens": null,
+    "output_tokens": null,
+    "cache_write_tokens": null,
+    "cost_usd": null,
+    "turns": null,
+    "wall_time_sec": null
+  },
+  "quality": {
+    "score": 10,
+    "quality_pass": true,
+    "critical_failures": [],
+    "grader": "Codex operator using benchmarks/templates/quality-rubric.md and fixture expected files",
+    "notes": "Synthetic fixture only. Correctly preserved generated cover, rejected speculative review issues, removed local path leakage, and completed checklist evidence."
+  },
+  "packet": {
+    "truncated_files": [],
+    "approx_token_count_used_for_billing": false,
+    "notes": "Packet approx-token counts were not used as billing evidence. For scoped review, first Claude run breached scope and was excluded; valid rerun used prompt-embedded packet with tools disabled."
+  },
+  "artifacts": {
+    "prompt": "benchmarks/results/daily-paper-v1/artifacts/run-001/fresh_handoff.md",
+    "final_output": "benchmarks/results/daily-paper-v1/artifacts/run-001/fresh_handoff-final.md"
+  },
+  "limitations": [
+    "single synthetic fixture",
+    "single operator-smoke repetition",
+    "not an independent fresh Codex process per arm",
+    "provider-reported token/cost usage unavailable",
+    "do not use for public savings claims"
+  ],
+  "notes": "Executed from minimal handoff context: checklist, cover log, old Claude review, and article.html were sufficient; article.md/figure-index were not needed for the fix."
+}
