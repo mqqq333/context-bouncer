@@ -71,6 +71,29 @@ This creates files under `benchmarks/results/daily-paper-v1/usage-imports/`. Fil
 
 Generated templates are intended as local work-in-progress. Review them before committing; do not commit secrets or transcript excerpts.
 
+## Optional API query path
+
+If your intermediary exposes usage endpoints, use `scripts/query_usage.py` to fetch aggregate usage without storing full prompts or transcripts. Keep private values in environment variables:
+
+```powershell
+$env:CONTEXT_BOUNCER_USAGE_BASE_URL="<your-intermediary-base-url>"
+$env:CONTEXT_BOUNCER_USAGE_BEARER_TOKEN="<redacted>"   # or use CONTEXT_BOUNCER_USAGE_COOKIE
+python scripts\query_usage.py `
+  --start-date 2026-06-24 `
+  --end-date 2026-06-30 `
+  --check-auth `
+  --include-records `
+  --out .omx\private\usage-2026-06-24-2026-06-30.json
+```
+
+Default endpoint paths are:
+
+- `/api/v1/auth/me` for optional auth checking;
+- `/api/v1/usage/stats` for aggregate usage;
+- `/api/v1/usage` for paginated record summaries.
+
+The script prints/writes normalized aggregate fields and redacts obvious secret fields when saving record previews. Do not commit `.omx/private/` outputs.
+
 ## Privacy rules
 
 - Import aggregate usage fields only.

@@ -101,6 +101,18 @@ Then:
 python scripts\context_bouncer.py handoff --input-json handoff-input.json --out handoff.md
 ```
 
+## Usage API query helper
+
+For benchmarks, provider-reported usage is the only acceptable cost evidence. If your intermediary exposes usage endpoints, configure the helper with environment variables instead of committing private URLs or credentials:
+
+```powershell
+$env:CONTEXT_BOUNCER_USAGE_BASE_URL="<your-intermediary-base-url>"
+$env:CONTEXT_BOUNCER_USAGE_BEARER_TOKEN="<redacted>"
+python scripts\query_usage.py --start-date 2026-06-24 --end-date 2026-06-30 --check-auth
+```
+
+See `docs/usage-sources.md` for import and privacy rules.
+
 ## Fresh-session commands
 
 Codex:
