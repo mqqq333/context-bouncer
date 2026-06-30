@@ -111,6 +111,23 @@ For this provider, `input_tokens` and `cache_read_tokens` are separate buckets; 
 - Redact keys and bearer tokens before committing artifacts.
 - Keep screenshots out of the repo unless they are cropped and redacted.
 
+## Windowed experiment attribution
+
+When other sessions may share the same provider account, avoid date-level totals for experiment claims. Instead:
+
+1. record the arm start/end timestamps with timezone offsets;
+2. export provider records with `scripts/query_usage.py --save-records`;
+3. summarize only records inside that exact window. The window must cover the full arm runtime:
+
+```powershell
+python scripts\summarize_usage_window.py `
+  --records .omx\private\experiments\usage-records.json `
+  --start 2026-01-01T00:00:00+00:00 `
+  --end 2026-01-01T00:30:00+00:00
+```
+
+For cross-tool workflows, keep cost boundaries explicit. For example, one provider account can cover Codex-side `/responses` calls while Claude Code reviewer usage may need a separate source. Do not compare total arm costs until all providers are imported.
+
 ## Claim rules
 
 Allowed only after importing provider-reported usage:

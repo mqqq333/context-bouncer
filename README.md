@@ -101,6 +101,36 @@ Then:
 python scripts\context_bouncer.py handoff --input-json handoff-input.json --out handoff.md
 ```
 
+## Benchmark status
+
+Context Bouncer includes a synthetic bloat benchmark fixture and usage-import tools, but public claims remain deliberately conservative.
+
+Current private smoke evidence (one run per arm on `daily-paper-bloat-v1`) showed lower **Codex-side provider-reported usage** for fresh handoff workflows while preserving quality-pass outputs. This is useful as a pipeline check, not a universal savings claim.
+
+| Arm | Context shape | Quality result | Codex-side billed cost | Cost boundary |
+|---|---|---:|---:|---|
+| `long_session_baseline` | broad context baseline | 10/10 pass | `$0.180117` | Codex provider only |
+| `fresh_handoff` | minimal handoff | 9/10 pass | `$0.102639` | Codex provider only |
+| `fresh_handoff_scoped_review` | minimal handoff + scoped Claude review | 10/10 pass | `$0.098966` | Codex provider only; Claude reviewer cost not included |
+
+Indicative Codex-side billed cost bars from this single private smoke run (bar width proportional to cost; `#` is about `$0.006`):
+
+```text
+long_session_baseline       $0.180117  ##############################
+fresh_handoff               $0.102639  #################
+fresh_handoff_scoped_review $0.098966  ################
+```
+
+Quality variation is expected at this sample size; do not quote a headline savings percentage from a single private run. For cross-tool workflows, import every provider's usage before comparing total arm cost. Use provider-reported usage, record quality, and report limitations with every result.
+
+Relevant helpers:
+
+```powershell
+python scripts\query_usage.py --help
+python scripts\summarize_usage_window.py --help
+python scripts\summarize_benchmark.py --help
+```
+
 ## Usage API query helper
 
 For benchmarks, provider-reported usage is the only acceptable cost evidence. If your intermediary exposes usage endpoints, configure the helper with environment variables instead of committing private URLs or credentials:
