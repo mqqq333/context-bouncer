@@ -56,6 +56,24 @@ class SummarizeUsageWindowTests(unittest.TestCase):
         self.assertEqual(result["models"], ["gpt-5.5"])
         self.assertEqual(result["record_ids"], [1])
 
+    def test_rejects_naive_window_datetime(self):
+        with self.assertRaises(SystemExit):
+            summarize_usage_window.summarize_window(
+                [{"created_at": "2026-06-30T23:00:00+08:00", "actual_cost": 0.1}],
+                start="2026-06-30T22:00:00",
+                end="2026-06-30T23:30:00+08:00",
+                source=Path("records.json"),
+            )
+
+    def test_skips_malformed_record_datetime(self):
+        result = summarize_usage_window.summarize_window(
+            [{"created_at": "not-a-date", "actual_cost": 0.1}],
+            start="2026-06-30T22:00:00+08:00",
+            end="2026-06-30T23:30:00+08:00",
+            source=Path("records.json"),
+        )
+        self.assertEqual(result["records"]["record_count"], 0)
+
     def test_cli_writes_summary(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

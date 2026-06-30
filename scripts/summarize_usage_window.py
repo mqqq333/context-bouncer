@@ -33,9 +33,12 @@ def parse_dt(value: str) -> datetime:
     if text.endswith("Z"):
         text = text[:-1] + "+00:00"
     try:
-        return datetime.fromisoformat(text)
+        parsed = datetime.fromisoformat(text)
     except ValueError as exc:
         raise SystemExit(f"invalid datetime {value!r}; use ISO 8601") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise SystemExit(f"datetime {value!r} must include a UTC offset, for example +08:00 or Z")
+    return parsed
 
 
 def load_records(path: Path) -> list[dict[str, Any]]:
@@ -52,7 +55,10 @@ def record_time(record: dict[str, Any]) -> datetime | None:
     value = record.get("created_at")
     if not isinstance(value, str) or not value.strip():
         return None
-    return parse_dt(value)
+    try:
+        return parse_dt(value)
+    except SystemExit:
+        return None
 
 
 def filter_window(records: list[dict[str, Any]], start: datetime, end: datetime) -> list[dict[str, Any]]:
