@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Context Cost Hygiene helpers for Claude Code and Codex.
 
 This script creates small handoffs/review packets and audits obvious context-bloat
@@ -240,7 +240,9 @@ def cmd_review_pack(args: argparse.Namespace) -> str:
         if truncated:
             lines.append(f"[Truncated at {take} chars; ask before loading more.].")
         lines.append("")
-    lines += ["## Packet budget", f"Approx chars included: {used} / {budget}", f"Approx tokens: {rough_tokens('\n'.join(lines))}"]
+    packet_so_far = "\n".join(lines)
+    approx_tokens = rough_tokens(packet_so_far)
+    lines += ["## Packet budget", f"Approx chars included: {used} / {budget}", f"Approx tokens: {approx_tokens}"]
     return "\n".join(lines) + "\n"
 
 
