@@ -1,4 +1,4 @@
-﻿name: smoke
+name: smoke
 
 on:
   push:
@@ -14,6 +14,8 @@ jobs:
           python-version: '3.11'
       - name: CLI help
         run: python scripts/context_bouncer.py --help
+      - name: Unit tests
+        run: python -m unittest discover -s tests
       - name: Scan self
         run: python scripts/context_bouncer.py scan --repo . --limit 5
       - name: Fresh command

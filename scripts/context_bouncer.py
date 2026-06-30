@@ -9,18 +9,16 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
+from dataclasses import dataclass
+from pathlib import Path
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 except Exception:
     pass
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Iterable
 
 BLOAT_NAMES = {
     "AGENTS.md",
@@ -30,9 +28,14 @@ BLOAT_NAMES = {
     "CONTEXT.md",
     "README.md",
 }
-BLOAT_DIRS = {".codex", ".claude", ".agents", ".omx", "node_modules", ".git"}
+SKIP_DIRS = {"node_modules", ".git"}
+CONTEXT_DIRS = {".codex", ".claude", ".agents", ".omx"}
 DEFAULT_MAX_FILE_CHARS = 12_000
 DEFAULT_MAX_TOTAL_CHARS = 45_000
+DEFAULT_SCAN_SAMPLE_CHARS = 4_000
+STRING_JSON_FIELDS = {"repo", "task", "goal"}
+LIST_JSON_FIELDS = {"fact", "next", "file"}
+INT_JSON_FIELDS = {"max_file_chars", "max_total_chars"}
 
 
 def rel(path: Path, root: Path) -> str:
@@ -49,10 +52,10 @@ def read_text(path: Path, max_chars: int) -> tuple[str, bool]:
 
 
 def rough_tokens(text: str) -> int:
-    # Conservative-enough heuristic for hygiene triage, not billing.
-    ascii_words = len(re.findall(r"[A-Za-z0-9_./:-]+", text))
+    # Conservative-enough heuristic for local triage, not billing or benchmark claims.
+    ascii_words = len(re.findall(r"[A-Za-z0-9_]+", text))
     non_ascii = sum(1 for ch in text if ord(ch) > 127)
-    symbols = max(0, len(text) - ascii_words * 4 - non_ascii)
+    symbols = sum(1 for ch in text if ord(ch) <= 127 and not (ch.isalnum() or ch == "_"))
     return max(1, int(ascii_words * 1.3 + non_ascii * 1.0 + symbols / 4))
 
 
@@ -68,16 +71,15 @@ def find_bloat(root: Path, limit: int) -> list[FileInfo]:
     for p in root.rglob("*"):
         if not p.is_file():
             continue
-        parts = set(p.parts)
-        if any(part in BLOAT_DIRS and part not in {".codex", ".claude", ".agents", ".omx"} for part in parts):
+        if any(part in SKIP_DIRS for part in p.parts):
             continue
         name_hit = p.name in BLOAT_NAMES
-        dir_hit = any(part in {".codex", ".claude", ".agents", ".omx"} for part in p.parts)
+        dir_hit = any(part in CONTEXT_DIRS for part in p.parts)
         md_hit = p.suffix.lower() in {".md", ".txt"} and p.stat().st_size > 50_000
         if name_hit or dir_hit or md_hit:
             try:
                 size = p.stat().st_size
-                sample, _ = read_text(p, 30_000)
+                sample, _ = read_text(p, DEFAULT_SCAN_SAMPLE_CHARS)
                 infos.append(FileInfo(p, size, rough_tokens(sample)))
             except Exception:
                 continue
@@ -94,6 +96,22 @@ def write(path: Path | None, text: str) -> None:
         print(text)
 
 
+def _validate_json_value(key: str, value: object) -> object:
+    if key in STRING_JSON_FIELDS:
+        if not isinstance(value, str):
+            raise SystemExit(f"input_json.{key} must be a string")
+        return value
+    if key in LIST_JSON_FIELDS:
+        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+            raise SystemExit(f"input_json.{key} must be a list of strings")
+        return value
+    if key in INT_JSON_FIELDS:
+        if not isinstance(value, int) or value <= 0:
+            raise SystemExit(f"input_json.{key} must be a positive integer")
+        return value
+    return value
+
+
 def apply_input_json(args: argparse.Namespace, allowed: set[str]) -> None:
     """Merge UTF-8 JSON fields into argparse args.
 
@@ -104,12 +122,16 @@ def apply_input_json(args: argparse.Namespace, allowed: set[str]) -> None:
     if not path:
         return
     data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    if not isinstance(data, dict):
+        raise SystemExit("input_json must be a JSON object")
+    for key in sorted(set(data) - allowed):
+        print(f"warning: input_json key {key!r} is not used", file=sys.stderr)
     for key in allowed:
         if key not in data:
             continue
         current = getattr(args, key, None)
         if current in (None, "", []):
-            setattr(args, key, data[key])
+            setattr(args, key, _validate_json_value(key, data[key]))
 
 
 def cmd_fresh(args: argparse.Namespace) -> str:
@@ -217,10 +239,10 @@ def cmd_review_pack(args: argparse.Namespace) -> str:
         if not p.is_absolute():
             p = root / p
         if not p.exists():
-            lines.append(f"- `{rel(p, root)}` — MISSING")
+            lines.append(f"- `{rel(p, root)}` - MISSING")
             continue
         size = p.stat().st_size
-        lines.append(f"- `{rel(p, root)}` — {size} bytes")
+        lines.append(f"- `{rel(p, root)}` - {size} bytes")
     lines += [""]
     for f in file_args:
         p = Path(f)
@@ -240,10 +262,10 @@ def cmd_review_pack(args: argparse.Namespace) -> str:
         if truncated:
             lines.append(f"[Truncated at {take} chars; ask before loading more.].")
         lines.append("")
-    packet_so_far = "\n".join(lines)
-    approx_tokens = rough_tokens(packet_so_far)
-    lines += ["## Packet budget", f"Approx chars included: {used} / {budget}", f"Approx tokens: {approx_tokens}"]
-    return "\n".join(lines) + "\n"
+    lines += ["## Packet budget", f"Approx chars included: {used} / {budget}"]
+    packet_text = "\n".join(lines) + "\n"
+    packet_text += f"Approx tokens: {rough_tokens(packet_text)}\n"
+    return packet_text
 
 
 def cmd_scan(args: argparse.Namespace) -> str:
@@ -255,15 +277,15 @@ def cmd_scan(args: argparse.Namespace) -> str:
         f"Project: `{root}`",
         "",
         "This is a local heuristic scan. It does not inspect provider-side prompt cache.",
+        "Token estimates are rough triage hints only; do not use them as benchmark or billing data.",
         "",
         "## Likely static/context overhead sources",
         "| Path | Bytes | Rough tokens in sample | Recommendation |",
         "|---|---:|---:|---|",
     ]
     for info in infos:
-        name = info.path.name
         recommendation = "reference by path; do not paste manually"
-        if any(part in {".codex", ".claude", ".agents"} for part in info.path.parts):
+        if any(part in CONTEXT_DIRS for part in info.path.parts):
             recommendation = "keep concise; load only when skill/hook actually needed"
         if info.size > 200_000:
             recommendation = "do not load whole file; use targeted grep/slices"
@@ -325,5 +347,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

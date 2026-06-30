@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <h1 align="center">Context Bouncer</h1>
 </p>
 
@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/license-MIT-111111?style=flat-square" alt="MIT license">
 </p>
 
-Context Bouncer is a tiny hygiene layer for Claude Code and Codex workflows. It helps you stop paying for context you did not mean to keep carrying: pasted `AGENTS.md`, huge skill catalogs, old review logs, full PDFs, generated HTML backups, and “just send Claude the whole package” review habits.
+Context Bouncer is a tiny hygiene layer for Claude Code and Codex workflows. It helps reduce avoidable context carryover: pasted `AGENTS.md`, huge skill catalogs, old review logs, full PDFs, generated HTML backups, and “just send Claude the whole package” review habits.
 
 It is not a prompt-cache hack. It does not try to delete provider-side caches. It helps you start fresh with a small handoff and send reviewers only the files they need.
 
@@ -28,7 +28,7 @@ You ask a small follow-up question. The agent sends a massive cached-input prefi
 - old logs, PDFs, HTML, or review transcripts;
 - a cross-review packet that included far more than the reviewer needed.
 
-Cached input is cheaper than fresh input, but it is not free. Long prefix × many turns still burns money.
+Cached input is cheaper than fresh input, but it is not free. Long prefix × many turns can still increase cost; real billing impact depends on provider-reported usage, cache hit behavior, model pricing, and session timing.
 
 ## What Context Bouncer does
 
@@ -165,7 +165,7 @@ See `docs/prior-art.md`.
 
 ## Benchmark plan
 
-See `benchmarks/README.md`. The first benchmark target is a real daily-paper workflow: long-session baseline vs fresh handoff vs fresh handoff + scoped Claude review packet.
+See `benchmarks/README.md` and `docs/benchmark-methodology.md`. Benchmark methodology is planned, but no benchmark results have been collected yet. The first target is a real daily-paper workflow: long-session baseline vs fresh handoff vs fresh handoff + scoped Claude review packet. Any future savings claim must use provider-reported net cost and pass the quality rubric.
 
 ## License
 
